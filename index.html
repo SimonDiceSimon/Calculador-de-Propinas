@@ -1,10 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Mi Primera Pagina Web</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divisor de Gastos</title>
+    <!-- Carga de Tailwind CSS para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de Tailwind para usar colores personalizados -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'slate': {
+                            800: '#1e293b', // Un tono de gris oscuro
+                            900: '#0f172a', // Un tono más oscuro
+                            950: '#020617', // Casi negro
+                            400: '#94a3b8', // Gris claro para texto
+                            700: '#334155', // Gris medio para bordes
+                        },
+                        'cyan': {
+                            400: '#22d3ee', // Cian brillante para resultados
+                            500: '#06b6d4', // Cian para botones activos
+                            600: '#0891b2', // Cian más oscuro para botones
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Fuente principal
+                        mono: ['Space Mono', 'monospace'], // Fuente monoespaciada para números
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Carga de React y ReactDOM desde CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Carga de Babel para transformar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-    <h1>¡Hola Mundo! Esta es mi primera página en GitHub Pages.</h1>
-    <p>Si puedes leer esto, ¡lo has logrado!</p>
+    <!-- Div donde se montará la aplicación React -->
+    <div id="root"></div>
+
+    <!-- Script para tu aplicación React -->
+    <script type="text/babel">
+        // Componente para el ícono de dólar (SVG)
+        const DollarIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v1H8a1 1 0 000 2h1v1a1 1 0 002 0v-1h1a1 1 0 100-2h-1V6zM9 13.5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clipRule="evenodd" />
+            </svg>
+        );
+
+        // Componente para el ícono de persona (SVG)
+        const PersonIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+        );
+
+        // Componente para una fila de input (campo de entrada de texto/número)
+        const InputRow = ({ label, value, onChange, icon, placeholder }) => (
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-400 mb-2">{label}</label>
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        {icon}
+                    </div>
+                    <input
+                        type="number"
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        className="w-full bg-slate-800/50 border-2 border-slate-700 text-white text-right text-xl font-mono rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                    />
+                </div>
+            </div>
+        );
+
+        // Componente para los botones de selección de propina
+        const TipSelector = ({ tip, setTip }) => {
+            const tipPercentages = [0, 10, 15, 20]; // Porcentajes de propina disponibles
+
+            return (
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-slate-400 mb-2">Seleccionar Propina (%)</label>
+                    <div className="grid grid-cols-4 gap-3"> {/* Cuadrícula de 4 columnas para los botones */}
+                        {tipPercentages.map((percentage) => (
+                            <button
+                                key={percentage} // Clave única para cada botón
+                                onClick={() => setTip(percentage)} // Actualiza la propina al hacer clic
+                                className={`py-2 text-lg font-mono rounded-md transition ${
+                                    tip === percentage
+                                        ? 'bg-cyan-500 text-slate-900 font-bold' // Estilo si está seleccionado
+                                        : 'bg-slate-700 text-white hover:bg-cyan-400/50' // Estilo si no está seleccionado
+                                }`}
+                            >
+                                {percentage}%
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Componente para mostrar los resultados del cálculo
+        const ResultsDisplay = ({ billPerPerson, tipPerPerson, totalPerPerson, onReset }) => (
+            <div className="bg-slate-900/80 rounded-xl p-6 flex flex-col">
+                <div className="flex-grow">
+                    {/* Cuenta por persona */}
+                    <div className="flex items-center justify-between mb-5">
+                        <div>
+                            <p className="text-white text-lg">Cuenta</p>
+                            <p className="text-sm text-slate-400">por persona</p>
+                        </div>
+                        <p className="text-2xl font-mono text-cyan-400">
+                            ${billPerPerson}
+                        </p>
+                    </div>
+
+                    {/* Propina por persona */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <p className="text-white text-lg">Propina</p>
+                            <p className="text-sm text-slate-400">por persona</p>
+                        </div>
+                        <p className="text-2xl font-mono text-cyan-400">
+                            ${tipPerPerson}
+                        </p>
+                    </div>
+                    
+                    {/* Total por persona */}
+                    <div className="flex items-center justify-between border-t border-slate-700 pt-5">
+                        <div>
+                            <p className="text-white text-lg">Total</p>
+                            <p className="text-sm text-slate-400">por persona</p>
+                        </div>
+                        <p className="text-4xl md:text-5xl font-mono text-cyan-400">
+                            ${totalPerPerson}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onClick={onReset} // Función para reiniciar los valores
+                    className="w-full bg-cyan-600 text-slate-900 font-bold text-lg py-3 rounded-md mt-8 hover:bg-cyan-500 transition disabled:bg-slate-700 disabled:cursor-not-allowed"
+                    disabled={totalPerPerson === '0.00'} // Deshabilita el botón si el total es 0
+                >
+                    REINICIAR
+                </button>
+            </div>
+        );
+
+        // Componente principal de la aplicación (App)
+        const { useState, useMemo } = React; // Importa useState y useMemo de React
+
+        export default function App() {
+            // --- Estados de la aplicación ---
+            const [bill, setBill] = useState(''); // Estado para el total de la cuenta
+            const [people, setPeople] = useState(''); // Estado para la cantidad de personas
+            const [tip, setTip] = useState(15); // Estado para el porcentaje de propina (15% por defecto)
+
+            // --- Lógica de cálculo con useMemo para optimización ---
+            // useMemo recalcula los valores solo cuando 'bill', 'people' o 'tip' cambian
+            const { billPerPerson, tipPerPerson, totalPerPerson } = useMemo(() => {
+                const billFloat = parseFloat(bill); // Convierte el total de la cuenta a número flotante
+                const peopleInt = parseInt(people); // Convierte la cantidad de personas a número entero
+
+                // Si los valores no son válidos (no son números, o son cero/negativos), devuelve '0.00'
+                if (isNaN(billFloat) || isNaN(peopleInt) || billFloat <= 0 || peopleInt <= 0) {
+                    return { billPerPerson: '0.00', tipPerPerson: '0.00', totalPerPerson: '0.00' };
+                }
+
+                const tipAmount = billFloat * (tip / 100); // Calcula el monto de la propina
+                const finalBill = billFloat + tipAmount; // Calcula el total con propina
+                
+                const calculatedBillPerPerson = billFloat / peopleInt; // Cuenta por persona sin propina
+                const calculatedTipPerPerson = tipAmount / peopleInt; // Propina por persona
+                const calculatedTotalPerPerson = finalBill / peopleInt; // Total por persona
+
+                // Devuelve los resultados formateados a 2 decimales
+                return {
+                    billPerPerson: calculatedBillPerPerson.toFixed(2),
+                    tipPerPerson: calculatedTipPerPerson.toFixed(2),
+                    totalPerPerson: calculatedTotalPerPerson.toFixed(2),
+                };
+            }, [bill, people, tip]); // Dependencias: se recalcula si estos estados cambian
+
+            // --- Manejadores de eventos ---
+            const handleBillChange = (e) => {
+                setBill(e.target.value); // Actualiza el estado de la cuenta
+            };
+
+            const handlePeopleChange = (e) => {
+                setPeople(e.target.value); // Actualiza el estado de la cantidad de personas
+            };
+            
+            const handleReset = () => {
+                setBill(''); // Reinicia la cuenta
+                setPeople(''); // Reinicia la cantidad de personas
+                setTip(15); // Reinicia la propina al valor por defecto
+            };
+
+            // --- Renderizado del componente principal ---
+            return (
+                <div className="bg-slate-800 min-h-screen flex flex-col items-center justify-center font-sans p-4">
+                    <header className="mb-8">
+                        <h1 className="text-3xl text-cyan-400 font-mono tracking-widest">Calculadora de Propinas</h1>
+                    </header>
+                    
+                    <main className="w-full max-w-4xl bg-slate-900 shadow-2xl shadow-slate-950/50 rounded-2xl p-6 md:p-8">
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Columna de Inputs */}
+                            <div className="flex flex-col">
+                                <InputRow 
+                                    label="Total de la Cuenta"
+                                    value={bill}
+                                    onChange={handleBillChange}
+                                    icon={<DollarIcon />}
+                                    placeholder="0.00"
+                                />
+                                <TipSelector tip={tip} setTip={setTip} />
+                                <InputRow 
+                                    label="Cantidad de Personas"
+                                    value={people}
+                                    onChange={handlePeopleChange}
+                                    icon={<PersonIcon />}
+                                    placeholder="1"
+                                />
+                            </div>
+
+                            {/* Columna de Resultados */}
+                            <ResultsDisplay 
+                                billPerPerson={billPerPerson}
+                                tipPerPerson={tipPerPerson}
+                                totalPerPerson={totalPerPerson}
+                                onReset={handleReset}
+                            />
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // Monta la aplicación React en el elemento con id="root"
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
