@@ -45,6 +45,9 @@
 
     <!-- Script para tu aplicación React -->
     <script type="text/babel">
+        // Importa useState y useMemo de React (disponibles globalmente por el CDN)
+        const { useState, useMemo } = React; 
+
         // Componente para el ícono de dólar (SVG)
         const DollarIcon = () => (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
@@ -152,9 +155,7 @@
         );
 
         // Componente principal de la aplicación (App)
-        const { useState, useMemo } = React; // Importa useState y useMemo de React
-
-        export default function App() {
+        function App() { // Se eliminó 'export default'
             // --- Estados de la aplicación ---
             const [bill, setBill] = useState(''); // Estado para el total de la cuenta
             const [people, setPeople] = useState(''); // Estado para la cantidad de personas
